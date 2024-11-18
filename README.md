@@ -10,3 +10,16 @@ Caracteristici principale ale Puppet:
     - Puppet Agent: Componenta instalată pe mașinile client care primește și aplică configurațiile de la Puppet Master.
 - Cross-platform: Puppet poate gestiona infrastructuri pe diverse sisteme de operare, inclusiv Linux, Windows, macOS și alte platforme.
 - Idempotent: Puppet este idempotent, ceea ce înseamnă că aplicarea configurațiilor de mai multe ori nu schimbă nimic dacă starea dorită este deja atinsă.
+
+**Exemple de cod Puppet:** un exemplu simplu care instalează și asigură că serviciul Apache este pornit:
+```puppet
+class { 'apache':
+  ensure => 'present',
+}
+
+service { 'apache2':
+  ensure     => 'running',
+  enable     => true,
+  require    => Package['apache'],
+}
+```
