@@ -49,7 +49,7 @@ Arhitectura Puppet este bazată pe un model client-server și implică mai multe
 #### 2. DSL Puppet Language
 
 **Exemple:**
-1. Resurse:
+1. **Resurse:**
 
 ```puppet
 resource_type { 'resource_name':
@@ -66,7 +66,7 @@ file { '/etc/motd':
 }
 ```
 
-2. Variabile:
+2. **Variabile:**
 
 ```puppet
 $greeting = "Hello, Puppet!"
@@ -105,3 +105,42 @@ Manifestele sunt stocate în directorul: `/etc/puppetlabs/code/environments/prod
 *Exemple de fișiere comune:*
  - `site.pp`: Manifestul principal care conține configurația întregii infrastructuri.
  - Alte fișiere .pp pot fi organizate pe module sau funcționalități.
+
+ **! NOTE !**: tot ceea ce Puppet aplică unui nod este descris într-un manifest(cele scise la punctele de mai sus). Fie că folosești resurse individuale, clase, definiții parametrizate sau chiar logică condițională, toate aceste elemente sunt scrise în manifestele Puppet.
+
+---
+
+#### Folosirea `::` in Puppet:
+
+- Accesarea resurselor globale (Spațiu de nume global)
+- Se folosește pentru a accesa variabile globale, clase și resurse definite în moduri explicite.
+
+Exemplu:
+```
+classes:
+  - popp_common::cassandra_datadir
+```
+
+Explicație detaliată:
+
+  - classes:: Aceasta este o secțiune care se află într-un fișier de configurare Hiera sau într-un alt context unde se specifică clasele ce urmează a fi aplicate unui nod.
+    - popp_common::cassandra_datadir: Acesta este numele complet al unei clase din modulul popp_common, iar cassandra_datadir este o clasă definită în acel modul.
+        - popp_common: Este numele modulului în care este definită clasa.
+        - `::`: Operatorul de namespace este folosit pentru a face referire la clasa cassandra_datadir din modulul popp_common. Acesta ajută la clarificarea că vrei să folosești exact acea clasă și nu o altă clasă cu același nume care ar putea fi definită într-un alt modul sau context.
+
+#### Cum funcționează `define` în Puppet?
+
+Când folosești define, poți crea resurse care sunt instanțiate doar atunci când le folosești cu parametrii specifici. Aceste resurse nu sunt evaluate automat la încărcarea manifestului, ci sunt evaluate atunci când sunt instanțiate efectiv.
+
+**Exemplu:**
+
+```puppet
+define <nume_resursa>($parametru1, $parametru2, ...) {
+  # Logică pentru resursă
+  resource_type { $title:
+    param1 => $parametru1,
+    param2 => $parametru2,
+  }
+}
+```
+
