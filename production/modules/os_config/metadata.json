@@ -1,0 +1,9 @@
+{
+  "name": "os_config",
+  "version": "0.1.0",
+  "author": "yourname",
+  "summary": "OS-specific configurations for Puppet",
+  "license": "Apache-2.0",
+  "source": "",
+  "dependencies": []
+}

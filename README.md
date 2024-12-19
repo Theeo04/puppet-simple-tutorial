@@ -144,3 +144,117 @@ define <nume_resursa>($parametru1, $parametru2, ...) {
 }
 ```
 
+# Proiect: Creare 2 VM-uri `puppet-master` si `puppet-agent` pentru a configura Puppet
+
+***! Note !:*** Nu am folosit `hiera.yaml` pentru ca am utilizat module create de la 0 => deci nu a fost nevoie de modificarea altor parametri 😁
+
+#### 1. Creare si configurare VM-uri cu Multipass:
+
+ - Instalare Multipass: `sudo apt install multipass`
+ - Creare instante:
+   - *puppet-master*: `multipass launch --name puppet-master --mem 3G --disk 11G --cpus 3`
+   - *puppet-agent*: `multipass launch --name puppet-master --mem 2G --disk 10G --cpus 2`
+ - Afisare VM-uri: `multipass list`
+ - Conectare pe VM-uri: `multipass shell <nume-VM>`
+
+#### Instalare si configurare Puppet:
+
+Pe ambele vom rula script-ul:
+
+```shell
+sudo -i
+apt update
+wget https://apt.puppet.com/puppet8-release-focal.deb
+dpkg -i puppet8-release-focal.deb
+apt update
+```
+Iar pentru:
+ - `master` vom avea de adaugat:
+
+```shell
+sudo apt install puppetserver
+sudo systemctl start puppetserver
+sudo systemctl enable puppetserver
+```
+
+ - `agent`:
+
+```shell
+sudo apt install puppet-agent
+sudo systemctl start puppet.service
+sudo systemctl enable puppet.service
+```
+
+Pentru a se punea recunoaste in baza DNS-ului:
+
+ - Pentru `master` (in cazul in care ati numit masina `puppet-master`):
+
+Pentru `/etc/hosts`
+
+```shell
+127.0.1.1 puppet-master puppet
+127.0.0.1 localhost
+
+# The following lines are desirable for IPv6 capable hosts
+::1 localhost ip6-localhost ip6-loopback
+ff02::1 ip6-allnodes
+ff02::2 ip6-allrouters
+```
+
+Pentru `/etc/puppetlabs/puppet/puppet.conf`
+
+```shell
+[server]
+vardir = /opt/puppetlabs/server/data/puppetserver
+logdir = /var/log/puppetlabs/puppetserver
+rundir = /var/run/puppetlabs/puppetserver
+pidfile = /var/run/puppetlabs/puppetserver/puppetserver.pid
+codedir = /etc/puppetlabs/code
+
+[main]
+certname = puppet-master
+dns_alt_names = puppet,puppet-master
+environment = production
+server = puppet-master
+```
+
+ - Pentru `agent` (in cazul in care ati numit masina `puppet-agent`):
+
+ Pentru `/etc/hosts`:
+
+```shell
+127.0.1.1 puppet-agent puppet-agent
+127.0.0.1 localhost
+10.6.84.205 puppet puppet-master
+
+# The following lines are desirable for IPv6 capable hosts
+::1 localhost ip6-localhost ip6-loopback
+ff02::1 ip6-allnodes
+ff02::2 ip6-allrouters
+
+```
+
+Pentru `/etc/puppetlabs/puppet/puppet.conf`
+
+```shell
+[main]
+certname = puppet-agent
+server = puppet-master
+environment = production
+
+[server]
+vardir = /opt/puppetlabs/server/data/puppetserver
+logdir = /var/log/puppetlabs/puppetserver
+rundir = /var/run/puppetlabs/puppetserver
+pidfile = /var/run/puppetlabs/puppetserver/puppetserver.pid
+codedir = /etc/puppetlabs/code
+```
+
+#### Acceptarea de certificate:
+
+ - De pe `agent`: `sudo puppet agent -t`
+ - Iar de pe `master`:
+   - prima data pentru a vedea toate certificatele: `sudo puppetserver ca list --all`
+   - pentru a permite comunicarea master-ului cu agent-ul: `sudo puppetserver ca sign --certname puppet-agent`
+
+***Note:*** - este importanta respectarea fisierelor in ierarhia corecta + prezenta fisierelor de tip `metadata` configurate lamodul general!
